@@ -82,7 +82,11 @@
 
 # Make models secure
 
-* Turn event stream into a *source of truth* => Blockchain
+* Turn event stream into a *source of truth* => Blockchain and beyond...
     * Juno: [Smart contracts](https://github.com/buckie/juno) over Raft cluster
     * Uses cryptographically signed events to ensure history cannot be tampered with
     * Turns journal into a "legally binding ledger"?
+
+# Credits
+
+* [HAL-9000](http://observationdeck.kinja.com/the-monoliths-have-faces-interstellar-answers-2001-a-1659091453)
