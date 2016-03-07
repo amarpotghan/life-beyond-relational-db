@@ -3,6 +3,13 @@
 % Capital Match Team
 % 2016-03-10
 
+# Agenda
+
+* Introduction/Motivation
+* Slideware
+* Software
+* Future works
+
 # What's wrong with Relational Model?
 
 * Impedance Mismatch
