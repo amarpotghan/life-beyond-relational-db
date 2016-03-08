@@ -1,0 +1,71 @@
+name:                cm-demo
+version:             0.1.0.0
+license:             AllRightsReserved
+license-file:        LICENSE
+author:              Capital Match
+maintainer:          dev@capital-match.com
+
+category:            Web
+
+build-type:          Simple
+cabal-version:       >=1.10
+
+Library
+  Default-Language:   Haskell2010
+  build-depends:    base, mtl
+                  , servant, servant-client, servant-server
+                  , wai, http-types, aeson, free, time
+                  , text, either, mtl, stm, bytestring, base64-bytestring, containers, unordered-containers, data-default, network-uri
+
+  hs-source-dirs:     src
+  exposed-modules:  Capital.Demo
+                 
+  other-modules: 
+  default-extensions: OverloadedStrings
+  ghc-options:     -Wall -Werror -fno-warn-orphans -threaded -rtsopts -auto-all -caf-all
+
+Executable demo
+  Default-Language:  Haskell2010
+  main-is:           demo-service.hs
+  hs-source-dirs:    main
+  ghc-options:      -threaded -rtsopts
+  build-depends:     base
+                   , cm-demo
+
+Test-Suite tests
+   Default-Language:  Haskell2010
+   hs-source-dirs:    test
+   default-extensions:
+                      OverloadedStrings
+   type:              exitcode-stdio-1.0
+   main-is:           cm-demo-test.hs
+   ghc-options:       -threaded -Wall -Werror -fno-warn-orphans -rtsopts
+   build-depends: base
+                , cm-demo
+                , hspec
+                , hspec-wai
+                , wai
+                , lens
+                , free
+                , servant
+                , servant-server
+                , servant-client
+                , either
+                , exceptions
+                , http-client
+                , aeson
+                , QuickCheck
+                , bytestring, bytestring-conversion
+                , filepath
+                , directory
+                , http-types
+                , text
+                , test-framework
+                , test-framework-hunit
+                , test-framework-quickcheck2
+                , HUnit
+                , time
+                , stm
+                , containers
+                , data-default
+                , mtl
