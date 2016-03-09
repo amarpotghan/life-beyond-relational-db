@@ -10,12 +10,12 @@
 module Demo where
 
 import           Capital.Demo.Library
-import           Demo.Model
-import           Demo.Service       as Service
-import           Demo.State
 import           Control.Concurrent.STM
 import           Control.Exception.Base     (SomeException)
 import           Control.Monad.State        as S
+import           Demo.Model
+import           Demo.Service               as Service
+import           Demo.State
 
 import           Control.Concurrent.Async
 import           Control.Monad.Trans.Either
@@ -43,7 +43,7 @@ runInStore :: DemoStore a -> IO a
 runInStore = (fst <$>) . flip runStateT [] . runStore
 
 
-demoHandlers :: (MonadStore store) => ServerT DemoAPI (ServiceT (Error DemoView) DemoState store)
+demoHandlers :: (MonadStore store, MonadIO store) => ServerT DemoAPI (ServiceT (Error DemoView) DemoState store)
 demoHandlers = Service.getDemos :<|> getDemo :<|> createDemo :<|> updateDemo :<|> deleteDemo
 
 demoServer :: TVar DemoState -> Server DemoAPI

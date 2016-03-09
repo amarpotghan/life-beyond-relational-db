@@ -10,11 +10,13 @@
 module Demo.State where
 
 import           Capital.Demo.Library as Library
-import           Demo.Model
+import           Control.Monad.Trans
 import           Data.Aeson
 import           Data.Default
+import           Demo.Model
 import           GHC.Generics
 import           Prelude              hiding (read)
+
 -- | To make sure we can stub the state
 data DState s = DState { getDemos :: s -> DemoView
                        , setDemos :: DemoView -> s -> s
@@ -55,14 +57,6 @@ instance CommandExecutor DemoView DemoState where
   getEventType  = const DemoEvent
   setView       = setDemos prodDemoState
 
-type DemoService a = forall m . (MonadStore m) => ServiceT (Error DemoView) DemoState m a
-
--- type InDemos a = forall s . DState s -> InSTM s a
-
--- runWithDemos :: InDemos a -> DemoServiceM a
--- runWithDemos f = ask >>= liftIO . atomically . extractInSTM f
-
--- doGet :: (DemosView -> M.Map k a) -> InDemos [ a ]
--- doGet f = inSTM $ fmap (M.elems . f . getDemos) . readTVar
+type DemoService a = forall m . (MonadStore m, MonadIO m) => ServiceT (Error DemoView) DemoState m a
 
 

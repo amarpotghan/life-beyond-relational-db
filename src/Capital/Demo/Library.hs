@@ -68,10 +68,11 @@ class (BusinessModel a, EventClassifier s, ToJSON (EventType s)) => CommandExecu
   getType :: a -> EventType s
   getEventType :: Event a -> EventType s
   setView :: (a -> s -> s)
-  applyCommand :: (MonadIO m, MonadStore m, ToJSON (Event a))
+
+applyCommand :: (MonadIO m, MonadStore m, ToJSON (Event a), CommandExecutor a s)
                  => Command a
                  -> ServiceT (Error a) s m (Event a)
-  applyCommand command = do
+applyCommand command = do
       v <- ask
       (ts, ev) <- liftIO $ do
         ts <- getCurrentTime
@@ -165,7 +166,7 @@ runService :: (Monad m) => ServiceT e s m a -> TVar s -> m (Either e a)
 runService effect = runReaderT (runExceptT . runServiceT $ effect)
 --------------------------------------------MonadStore-------------------------------------------------------------------------------------------
 
-class (MonadIO m) => MonadStore m where
+class (Monad m) => MonadStore m where
   store :: ToJSON a => a -> m ()
   load :: FromJSON a => m x -> IO [a]
 
