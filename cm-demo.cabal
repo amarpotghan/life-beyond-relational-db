@@ -19,11 +19,10 @@ Library
 
   hs-source-dirs:     src
   exposed-modules:  Capital.Demo
-                 
-  other-modules: Capital.Demo.Library
-               , Capital.Demo.Model
-               , Capital.Demo.Service
-               , Capital.Demo.State
+                  , Capital.Demo.Library
+                  , Capital.Demo.Model
+                  , Capital.Demo.Service
+                  , Capital.Demo.State
 
   default-extensions: OverloadedStrings
   ghc-options:     -Wall -Werror -fno-warn-orphans -threaded -rtsopts -auto-all -caf-all

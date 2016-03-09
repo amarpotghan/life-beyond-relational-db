@@ -12,9 +12,6 @@
 
 module Capital.Demo.Library where
 
--- | An aggregate defines a source of truth regarding the state and behaviour of
--- some @BusinessModel@.
-
 import           Control.Applicative
 import           Control.Concurrent.STM
 import           Control.Monad

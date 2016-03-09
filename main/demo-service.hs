@@ -4,4 +4,3 @@ import           Capital.Demo
 
 main :: IO ()
 main = startDemoService
-
