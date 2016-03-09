@@ -17,10 +17,6 @@ import           Demo.Model
 import           GHC.Generics
 import           Prelude              hiding (read)
 
--- | To make sure we can stub the state
-data DState s = DState { getDemos :: s -> DemoView
-                       , setDemos :: DemoView -> s -> s
-                       }
 
 instance Default DemoState where
   def = DemoState Library.init (const $ return ())
@@ -30,10 +26,6 @@ data DemoState = DemoState { demos  :: DemoView
                            }
 
 
-prodDemoState :: DState DemoState
-prodDemoState = DState { getDemos = demos
-                       , setDemos = \ es s -> s { demos = es }
-                       }
 
 type Logger = String -> IO ()
 
@@ -52,10 +44,9 @@ instance ToJSON (EventType DemoState)
 instance FromJSON (EventType DemoState)
 
 instance CommandExecutor DemoView DemoState where
-  getView       = getDemos prodDemoState
-  getType       = const DemoEvent
+  getView       = demos
   getEventType  = const DemoEvent
-  setView       = setDemos prodDemoState
+  setView  a s  = s { demos = a }
 
 type DemoService a = forall m . (MonadStore m, MonadIO m) => ServiceT (Error DemoView) DemoState m a
 

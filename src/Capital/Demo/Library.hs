@@ -65,7 +65,6 @@ class BusinessModel a where
 --
 class (BusinessModel a, EventClassifier s, ToJSON (EventType s)) => CommandExecutor a s | s -> a where
   getView :: s -> a
-  getType :: a -> EventType s
   getEventType :: Event a -> EventType s
   setView :: (a -> s -> s)
 
