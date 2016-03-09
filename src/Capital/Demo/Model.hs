@@ -1,17 +1,24 @@
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeFamilies      #-}
+
 module Capital.Demo.Model where
 
 import           GHC.Generics
 
 
-import           Data.Text.Lazy as L
-
+import           Capital.Demo.Library
+import           Data.Aeson           as A
+import           Data.Default
+import           Data.Map             as M
+import           Data.Text.Lazy       as L
 type DemoId = Int
 
 data Demo = Demo { demoId          :: DemoId
                  , demoName        :: String
                  , demoDescription :: L.Text
-                 } deriving (Show, Generic)
+                 } deriving (Show, Generic, Eq)
 
 instance ToJSON Demo
 instance FromJSON Demo
@@ -24,32 +31,38 @@ instance BusinessModel DemoView where
                         | UpdateDemo DemoId Demo
                         | DeleteDemo DemoId
                           deriving (Show, Generic)
-                                   
+
   data Event DemoView = DemoAdded Demo
                       | DemoUpdated DemoId Demo
                       | DemoDeleted DemoId
-                      | DemoError String
+
                       deriving (Show, Generic)
-  
-  (DemoView d) `act` AddDemo d                 = let did = nextId d
-                                                 in DemoAdded d { demoId = did }
-                                                    
-  (DemoView d) `act` UpdateDemo did newDemo    = validate (flip M.member d) did  (DemoUpdated did newDemo) (demoError $ DemoNotFound did)
-  (DemoView d) `act` DeleteDemo did            = validate (flip M.member d) did (DemoDeleted did) (demoError $ DemoNotFound did))
+
+  data Error DemoView = DemoNotFound DemoId
+                      | InvalidDemo deriving (Show, Generic)
+
+  init = DemoView M.empty
+  (DemoView d) `act` AddDemo demo                 = let did = nextId d
+                                                    in return $ DemoAdded demo { demoId = did }
+
+  (DemoView d) `act` UpdateDemo did newDemo    = validate (flip M.member d) did  (DemoUpdated did newDemo) (DemoNotFound did)
+  (DemoView d) `act` DeleteDemo did            = validate (flip M.member d) did (DemoDeleted did) (DemoNotFound did)
 
   (DemoView d) `apply` DemoAdded demo          = DemoView (M.insert (demoId demo) demo d)
-  (DemoView d) `apply` DemoUpdated demoid demo = DemoView (M.adjust (const demo) demoId d))
-  (DemoView d) `apply` DemoDeleted demoid      = DemoView (M.delete did d)    
+  (DemoView d) `apply` DemoUpdated did demo = DemoView (M.adjust (const demo) did d)
+  (DemoView d) `apply` DemoDeleted did      = DemoView (M.delete did d)
 
 
-validate :: (a -> Bool) -> a -> e -> e -> e
-validate f a success failure | f a = success
-                             | otherwise = failure
+instance ToJSON (Event DemoView)
+instance FromJSON (Event DemoView)
 
-data DemoError = DemoNotFound DemoId
-               | InvalidDemo
-                deriving Show
+validate :: (a -> Bool) -> a -> s -> e -> Either e s
+validate f a success failure | f a = return success
+                             | otherwise = Left failure
 
-demoError :: DemoError -> Event DemoView
-demoError (DemoNotFound demoId) = DemoError ("Demo not found" <> show demoId)
-demoError InvalidDemo           = DemoError "Invalid demo" 
+-- | Get next numeric identifier for a Map.
+nextId :: (Num a, Eq b, Eq a) => M.Map a b -> a
+nextId v = if v == def then
+             1
+           else
+             ((+1) . fst . M.findMax) v

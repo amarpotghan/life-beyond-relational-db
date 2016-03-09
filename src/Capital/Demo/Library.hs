@@ -1,11 +1,13 @@
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE FunctionalDependencies     #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE RecordWildCards            #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
+
 {-# LANGUAGE UndecidableInstances       #-}
 
 module Capital.Demo.Library where
@@ -29,6 +31,11 @@ import           Data.Text.Lazy              as L
 import qualified Data.Text.Lazy.Encoding     as LE
 import           Data.Time
 
+
+
+
+
+--------------------------------------------------------Business Model-------------------------------------------------------------------------------------
 type EventVersion = Int
 
 
@@ -40,7 +47,7 @@ currentVersion = 1
 --
 -- @BusinessModel@ are pure hence immutable data structures, whereas @Aggregate@s are
 -- impure structures that maintain and control states.
-class (ToJSON (Command a)) => BusinessModel a where
+class BusinessModel a where
   data Event a   :: *
 
   data Command a :: *
@@ -56,9 +63,10 @@ class (ToJSON (Command a)) => BusinessModel a where
   apply :: a -> Event a -> a
 
 
+-----------------------------------------Executor----------------------------------------------------------------------------------------------------------------------------------------
 -- |Command execution for some `BusinessModel`, e.g. a fragment of state
 --
-class (BusinessModel a, EventClassifier s) => CommandExecutor a s where
+class (BusinessModel a, EventClassifier s, ToJSON (EventType s)) => CommandExecutor a s | s -> a where
   getView :: s -> a
   getType :: a -> EventType s
   getEventType :: Event a -> EventType s
@@ -68,8 +76,10 @@ class (BusinessModel a, EventClassifier s) => CommandExecutor a s where
                  -> ServiceT (Error a) s m (Event a)
   applyCommand command = do
       v <- ask
-      ts <- liftIO $ getCurrentTime
-      ev <- liftIO $ atomically $ actAndApply v command
+      (ts, ev) <- liftIO $ do
+        ts <- getCurrentTime
+        ev <- atomically $ actAndApply v command
+        return (ts, ev)
       let stored e etype = lift $ store (makeStoredEvent etype ts e)
       case ev of
        Right (e, etype) -> stored e etype >> return e
@@ -145,7 +155,7 @@ modify :: (MonadIO m) => (s -> s) -> ServiceT e s m ()
 modify f = ask >>= liftIO . atomically . flip modifyTVar' f
 
 newtype ServiceT e s m a =
-  ServiceT { runService :: ExceptT e (ReaderT (TVar s) m) a }
+  ServiceT { runServiceT :: ExceptT e (ReaderT (TVar s) m) a }
   deriving (Functor, Applicative, Monad, Alternative, MonadPlus, MonadError e, MonadReader (TVar s))
 
 instance MonadTrans (ServiceT e r) where
@@ -154,17 +164,13 @@ instance MonadTrans (ServiceT e r) where
 instance (MonadIO m) => MonadIO (ServiceT e s m) where
   liftIO = lift . liftIO
 
+runService :: (Monad m) => ServiceT e s m a -> TVar s -> m (Either e a)
+runService effect = runReaderT (runExceptT . runServiceT $ effect)
 --------------------------------------------MonadStore-------------------------------------------------------------------------------------------
 
-class (MonadIO m, Functor m) => MonadStore m where
-  store :: StoredEvent a -> m ()
-  load :: m [StoredEvent a]
-
--- newtype StoreT a = WriterT [StoredEvent] IO a
-
--- instance MonadStore (WriterT [StoredEvent] IO) where
---   store = tell
---   load = execWriterT
+class (MonadIO m) => MonadStore m where
+  store :: ToJSON a => a -> m ()
+  load :: FromJSON a => m x -> IO [a]
 
 -------------------------------------------------------------- Encoding ---------------------------------------------------------------------------
 data Base64
