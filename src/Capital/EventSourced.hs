@@ -68,15 +68,15 @@ applyCommand :: (MonadIO m, MonadStore m, ToJSON (Event a), CommandExecutor a s)
                  => Command a
                  -> ServiceT (Error a) s m (Event a)
 applyCommand command = do
-      v <- ask
-      (ts, ev) <- liftIO $ do
-        ts <- getCurrentTime
-        ev <- atomically $ actAndApply v command
-        return (ts, ev)
-      let stored e etype = lift $ store (makeStoredEvent etype ts e)
-      case ev of
-       Right (e, etype) -> stored e etype >> return e
-       Left l  -> throwError l
+  v <- ask
+  (ts, ev) <- liftIO $ do
+    ts <- getCurrentTime
+    ev <- atomically $ actAndApply v command
+    return (ts, ev)
+  let stored e etype = lift $ store (makeStoredEvent etype ts e)
+  case ev of
+   Right (e, etype) -> stored e etype >> return e
+   Left l  -> throwError l
 
 
 currentSha1 :: Encoded Hex
