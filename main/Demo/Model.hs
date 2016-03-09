@@ -61,8 +61,7 @@ validate f a success failure | f a = return success
                              | otherwise = Left failure
 
 -- | Get next numeric identifier for a Map.
-nextId :: (Num a, Eq b, Eq a) => M.Map a b -> a
-nextId v = if v == def then
-             1
-           else
-             ((+1) . fst . M.findMax) v
+nextId :: (Num a, Eq b, Eq a, Enum a) => M.Map a b -> a
+nextId v = if M.null v
+           then 1
+           else (succ . fst . M.findMax) v

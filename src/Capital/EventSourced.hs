@@ -57,6 +57,7 @@ class BusinessModel a where
 
 
 -----------------------------------------Executor----------------------------------------------------------------------------------------------------------------------------------------
+
 -- |Command execution for some `BusinessModel`, e.g. a fragment of state
 --
 class (BusinessModel a, EventClassifier s, ToJSON (EventType s)) => CommandExecutor a s | s -> a where
@@ -64,6 +65,8 @@ class (BusinessModel a, EventClassifier s, ToJSON (EventType s)) => CommandExecu
   getEventType :: Event a -> EventType s
   setView :: (a -> s -> s)
 
+-- | @act@ command to "current" business model, then @apply@ event to it. modify state with new business model and stores the event
+-- Please note that, Storing event and state updatation is not atomic
 applyCommand :: (MonadIO m, MonadStore m, ToJSON (Event a), CommandExecutor a s)
                  => Command a
                  -> ServiceT (Error a) s m (Event a)
@@ -79,9 +82,56 @@ applyCommand command = do
    Left l  -> throwError l
 
 
-currentSha1 :: Encoded Hex
-currentSha1 = "000000000000000000"
 
+-- | Provides a way to classify events according to some category.
+-- Instances of this class are expected to be receptacles for stream of events that affect their
+-- state.
+class (Show (EventType c), Enum (EventType c)) => EventClassifier c where
+  data EventType c :: *
+  applyEvent :: c -> StoredEvent c -> c
+
+
+actAndApply :: (CommandExecutor a s) => TVar s -> Command a -> STM (Either (Error a) (Event a, EventType s))
+actAndApply v command = do
+  s <- readTVar v
+  let view = getView s
+  let e  = view `act` command
+  case e of
+   Right ev -> do
+     let newView = view `apply` ev
+     modifyTVar' v (setView newView)
+     return $ Right (ev, getEventType ev)
+   Left ev -> return $ Left ev
+
+gets :: (MonadIO m) => (s -> b) -> ServiceT e s m b
+gets f = f <$> (ask >>= liftIO . readTVarIO)
+
+modify :: (MonadIO m) => (s -> s) -> ServiceT e s m ()
+modify f = ask >>= liftIO . atomically . flip modifyTVar' f
+
+---------------------------------------------------------------- Service transformer -----------------------------------------------------------------------------------
+
+-- TODO: add a mtl style class
+newtype ServiceT e s m a =
+  ServiceT { runServiceT :: ExceptT e (ReaderT (TVar s) m) a }
+  deriving (Functor, Applicative, Monad, Alternative, MonadPlus, MonadError e, MonadReader (TVar s))
+
+instance MonadTrans (ServiceT e r) where
+  lift = ServiceT . lift . lift
+
+instance (MonadIO m) => MonadIO (ServiceT e s m) where
+  liftIO = lift . liftIO
+
+runService :: (Monad m) => ServiceT e s m a -> TVar s -> m (Either e a)
+runService effect = runReaderT (runExceptT . runServiceT $ effect)
+
+--------------------------------------------MonadStore-------------------------------------------------------------------------------------------
+
+class (Monad m) => MonadStore m where
+  store :: ToJSON a => a -> m ()
+  load :: FromJSON a => m x -> IO [a]
+
+-------------------------------------------------------------- StoredEvent ---------------------------------------------------------------------------
 makeStoredEvent ::  ToJSON (Event a)
                    => EventType s
                    -> UTCTime
@@ -121,50 +171,6 @@ instance FromJSON (EventType s) => FromJSON (StoredEvent s) where
   parseJSON _          = mempty
 
 
--- | Provides a way to classify events according to some category.
--- Instances of this class are expected to be receptacles for stream of events that affect their
--- state.
-class (Show (EventType c), Enum (EventType c)) => EventClassifier c where
-  data EventType c :: *
-  applyEvent :: c -> StoredEvent c -> c
-
-
-actAndApply :: (CommandExecutor a s) => TVar s -> Command a -> STM (Either (Error a) (Event a, EventType s))
-actAndApply v command = do
-  s <- readTVar v
-  let view = getView s
-  let e  = view `act` command
-  case e of
-   Right ev -> do
-     let newView = view `apply` ev
-     modifyTVar' v (setView newView)
-     return $ Right (ev, getEventType ev)
-   Left ev -> return $ Left ev
-
-gets :: (MonadIO m) => (s -> b) -> ServiceT e s m b
-gets f = f <$> (ask >>= liftIO . readTVarIO)
-
-modify :: (MonadIO m) => (s -> s) -> ServiceT e s m ()
-modify f = ask >>= liftIO . atomically . flip modifyTVar' f
-
-newtype ServiceT e s m a =
-  ServiceT { runServiceT :: ExceptT e (ReaderT (TVar s) m) a }
-  deriving (Functor, Applicative, Monad, Alternative, MonadPlus, MonadError e, MonadReader (TVar s))
-
-instance MonadTrans (ServiceT e r) where
-  lift = ServiceT . lift . lift
-
-instance (MonadIO m) => MonadIO (ServiceT e s m) where
-  liftIO = lift . liftIO
-
-runService :: (Monad m) => ServiceT e s m a -> TVar s -> m (Either e a)
-runService effect = runReaderT (runExceptT . runServiceT $ effect)
---------------------------------------------MonadStore-------------------------------------------------------------------------------------------
-
-class (Monad m) => MonadStore m where
-  store :: ToJSON a => a -> m ()
-  load :: FromJSON a => m x -> IO [a]
-
 -------------------------------------------------------------- Encoding ---------------------------------------------------------------------------
 data Base64
 data Hex
@@ -198,3 +204,7 @@ fromBase64Text = B64.decodeLenient . LE.encodeUtf8 . encodedText
 
 encodeBase64 :: ByteString -> ByteString
 encodeBase64 = B64.encode
+
+currentSha1 :: Encoded Hex
+currentSha1 = "000000000000000000"
+
