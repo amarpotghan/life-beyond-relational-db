@@ -25,8 +25,6 @@ data DemoState = DemoState { demos  :: DemoView
                            , logger :: Logger
                            }
 
-
-
 type Logger = String -> IO ()
 
 initDemosState :: Logger -> DemoState

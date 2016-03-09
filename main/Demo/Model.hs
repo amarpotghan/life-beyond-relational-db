@@ -35,7 +35,6 @@ instance BusinessModel DemoView where
   data Event DemoView = DemoAdded Demo
                       | DemoUpdated DemoId Demo
                       | DemoDeleted DemoId
-
                       deriving (Show, Generic)
 
   data Error DemoView = DemoNotFound DemoId
