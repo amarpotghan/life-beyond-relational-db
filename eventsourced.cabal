@@ -36,6 +36,8 @@ Executable demo
                , Demo.Model
                , Demo.Service
                , Demo.State
+               , Demo.Store
+
 
 Test-Suite tests
    Default-Language:  Haskell2010
