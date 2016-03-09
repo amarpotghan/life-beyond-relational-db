@@ -8,7 +8,7 @@ module Demo.Model where
 import           GHC.Generics
 
 
-import           Capital.Demo.Library
+import           Capital.EventSourced
 import           Data.Aeson           as A
 import           Data.Default
 import           Data.Map             as M
@@ -41,6 +41,7 @@ instance BusinessModel DemoView where
                       | InvalidDemo deriving (Show, Generic)
 
   init = DemoView M.empty
+
   (DemoView d) `act` AddDemo demo                 = let did = nextId d
                                                     in return $ DemoAdded demo { demoId = did }
 
@@ -48,8 +49,8 @@ instance BusinessModel DemoView where
   (DemoView d) `act` DeleteDemo did            = validate (flip M.member d) did (DemoDeleted did) (DemoNotFound did)
 
   (DemoView d) `apply` DemoAdded demo          = DemoView (M.insert (demoId demo) demo d)
-  (DemoView d) `apply` DemoUpdated did demo = DemoView (M.adjust (const demo) did d)
-  (DemoView d) `apply` DemoDeleted did      = DemoView (M.delete did d)
+  (DemoView d) `apply` DemoUpdated did demo    = DemoView (M.adjust (const demo) did d)
+  (DemoView d) `apply` DemoDeleted did         = DemoView (M.delete did d)
 
 
 instance ToJSON (Event DemoView)

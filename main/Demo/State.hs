@@ -9,7 +9,7 @@
 
 module Demo.State where
 
-import           Capital.Demo.Library as Library
+import           Capital.EventSourced as Library
 import           Control.Monad.Trans
 import           Data.Aeson
 import           Data.Default

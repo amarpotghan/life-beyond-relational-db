@@ -2,7 +2,7 @@
 
 module Demo.Service where
 
-import           Capital.Demo.Library
+import           Capital.EventSourced
 import           Demo.Model
 import           Demo.State
 

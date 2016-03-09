@@ -10,7 +10,7 @@
 module Demo (startDemoService
             ) where
 
-import           Capital.Demo.Library
+import           Capital.EventSourced
 
 import           Control.Concurrent.Async
 import           Control.Concurrent.STM

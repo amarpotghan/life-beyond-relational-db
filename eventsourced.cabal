@@ -17,7 +17,7 @@ Library
                   , text, stm, bytestring, base64-bytestring, containers
 
   hs-source-dirs:     src
-  exposed-modules:  Capital.Demo.Library
+  exposed-modules:  Capital.EventSourced
 
   default-extensions: OverloadedStrings
   ghc-options:     -Wall -Werror -fno-warn-orphans -threaded -rtsopts -auto-all -caf-all

@@ -10,7 +10,7 @@
 
 {-# LANGUAGE UndecidableInstances       #-}
 
-module Capital.Demo.Library where
+module Capital.EventSourced where
 
 import           Control.Applicative
 import           Control.Concurrent.STM
@@ -27,10 +27,6 @@ import qualified Data.Text                   as T
 import           Data.Text.Lazy              as L
 import qualified Data.Text.Lazy.Encoding     as LE
 import           Data.Time
-
-
-
-
 
 --------------------------------------------------------Business Model-------------------------------------------------------------------------------------
 type EventVersion = Int
