@@ -1,10 +1,10 @@
 {-# LANGUAGE RankNTypes #-}
 
-module Capital.Demo.Service where
+module Demo.Service where
 
 import           Capital.Demo.Library
-import           Capital.Demo.Model
-import           Capital.Demo.State
+import           Demo.Model
+import           Demo.State
 
 import           Control.Concurrent.STM.TVar (TVar, readTVar)
 import           Control.Monad.Except        (throwError)

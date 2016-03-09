@@ -7,12 +7,12 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE TypeOperators              #-}
 
-module Capital.Demo where
+module Demo where
 
 import           Capital.Demo.Library
-import           Capital.Demo.Model
-import           Capital.Demo.Service       as Service
-import           Capital.Demo.State
+import           Demo.Model
+import           Demo.Service       as Service
+import           Demo.State
 import           Control.Concurrent.STM
 import           Control.Exception.Base     (SomeException)
 import           Control.Monad.State        as S

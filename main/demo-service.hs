@@ -1,6 +1,6 @@
 module Main where
 
-import           Capital.Demo
+import           Demo
 
 main :: IO ()
 main = startDemoService

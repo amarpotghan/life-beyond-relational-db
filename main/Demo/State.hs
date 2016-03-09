@@ -7,10 +7,10 @@
 {-# LANGUAGE RecordWildCards            #-}
 {-# LANGUAGE TypeFamilies               #-}
 
-module Capital.Demo.State where
+module Demo.State where
 
 import           Capital.Demo.Library as Library
-import           Capital.Demo.Model
+import           Demo.Model
 import           Data.Aeson
 import           Data.Default
 import           GHC.Generics

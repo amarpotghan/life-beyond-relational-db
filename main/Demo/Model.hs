@@ -3,7 +3,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeFamilies      #-}
 
-module Capital.Demo.Model where
+module Demo.Model where
 
 import           GHC.Generics
 
