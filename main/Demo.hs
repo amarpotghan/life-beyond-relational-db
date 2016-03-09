@@ -77,4 +77,3 @@ startDemoService = do
   s <- newTVarIO def
   r <- tryAny $ Warp.run 3000 $ run s
   Prelude.putStrLn ("Server has stopped; reason = " <> show r)
-

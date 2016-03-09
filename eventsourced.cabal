@@ -1,4 +1,4 @@
-name:                cm-demo
+name:                eventsourced
 version:             0.1.0.0
 license:             AllRightsReserved
 license-file:        LICENSE
@@ -12,10 +12,9 @@ cabal-version:       >=1.10
 
 Library
   Default-Language:   Haskell2010
-  build-depends:    base, mtl, transformers
-                  , servant, servant-client, servant-server
-                  , wai, http-types, aeson, free, time, warp, async
-                  , text, either, mtl, stm, bytestring, base64-bytestring, containers, unordered-containers, data-default, network-uri
+  build-depends:    base, mtl
+                  , aeson, time
+                  , text, stm, bytestring, base64-bytestring, containers
 
   hs-source-dirs:     src
   exposed-modules:  Capital.Demo.Library
@@ -28,10 +27,11 @@ Executable demo
   main-is:           demo-service.hs
   hs-source-dirs:    main
   ghc-options:      -threaded -rtsopts
-  build-depends:    base, mtl, transformers, cm-demo
-                  , servant, servant-client, servant-server
-                  , wai, http-types, aeson, free, time, warp, async
-                  , text, either, mtl, stm, bytestring, base64-bytestring, containers, unordered-containers, data-default, network-uri
+  build-depends:    base, mtl, transformers, eventsourced
+                  , servant, servant-server
+                  , wai, aeson, warp, async
+                  , text, either, stm, bytestring, containers, data-default
+
   other-modules: Demo
                , Demo.Model
                , Demo.Service
@@ -43,10 +43,10 @@ Test-Suite tests
    default-extensions:
                       OverloadedStrings
    type:              exitcode-stdio-1.0
-   main-is:           cm-demo-test.hs
+   main-is:           test.hs
    ghc-options:       -threaded -Wall -Werror -fno-warn-orphans -rtsopts
    build-depends: base
-                , cm-demo
+                , eventsourced
                 , hspec
                 , hspec-wai
                 , wai
