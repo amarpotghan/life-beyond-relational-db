@@ -1,5 +1,5 @@
-% Life Beyond Relational Database
 % Capital Match Team
+% Life Beyond Relational Database
 % 2016-03-10
 
 ## Agenda
@@ -94,12 +94,12 @@
 
 * Commands compute Event from State
 
-    ```
+    ```haskell
     act :: Command -> Model -> Event
     ```
     
 * Events modify model
-    ```
+    ```haskell
     apply :: Event -> Model -> Model
     ```
 
