@@ -1,16 +1,31 @@
-<!-- -*- coding: utf-8-unix; -*- -->
 % Life Beyond Relational Database
 % Capital Match Team
 % 2016-03-10
 
 ## Agenda
 
-* Introduction & Motivation
-* Slideware
-* Software
+* Introduction
+* Event-Sourcing Model
+* Implementation & Usage
 * Future works
 
+# Introduction
+
+## Who are we?
+
+![](images/cm-website.png)
+
+## Who are we?
+
+* Capital Match is the leading plaform in Singapore for peer-to-peer lending to SMEs
+* Backend system developed in Haskell, frontend in Clojurescript/Om since 2014
+* Core Development team of 3 + 1: Amar, Arnaud, Guo Liang, Zhou Yu
+
 # Relational Model
+
+-----
+
+![](images/relational-model.gif)
 
 ## What's good with Relational Model?
 
@@ -23,18 +38,23 @@
 * Writes/updates are complex
 * *Impedance Mismatch*: Lot of data is more tree-ish or graph-ish
 * One single Database for everything $\longrightarrow$ *SPOF*
+* **Mutable State**
 
-## Mutable State!
+----
 
-![One Ring to Rule Them All](images/one-ring.jpg)
+![](images/one-ring.jpg)
 
 # Event Sourcing
 
 ## State vs. Transitions
 
+![](images/state-transitions.png)
+
+## State vs. Transitions
+
 * RDBMS stores the **state** of the model at some point in time...
 * ... But we are also interested in the **transitions** ...
-* ... And deterministic state can always be reconstructed from a *sequence of transitions*.
+* ... And state[^5] can always be reconstructed from a *sequence of transitions*.
 
 ## The Event Sourcing Model
 
@@ -47,16 +67,16 @@
 ## Events makes it easier to...
 
 * Audit current state and what lead to it
-* Implement global undo/redo mechanism
+* Implement generic undo/redo mechanism[^6]
 * Run simulations with different hypothesis over live data
 * Cope with data format migrations
 * Handle potentially conflicting changes[^1]
 
-## Events & Business Model
+## Events Drive Business
 
 * Events are what makes a model dynamic: What affects it, how it reacts to outside world...
-* Provide foundation for [Domain Driven Design]() techniques $\longrightarrow$ Better business models, Ubiquitous language
-* Lead to [Event Storming]() technique for "requirements" elicitation and business domain modelling[^2]
+* Provide foundation for [Domain Driven Design](http://www.amazon.fr/Domain-Driven-Design-Tackling-Complexity-Software/dp/0321125215) techniques $\longrightarrow$ Better business models, Ubiquitous language
+* Lead to [Event Storming](http://ziobrando.blogspot.sg/2013/11/introducing-event-storming.html) technique for "requirements" elicitation and business domain modelling[^2]
 
 # In Practice
 
@@ -73,6 +93,7 @@
 ## Pure Business Models (2)
 
 * Commands compute Event from State
+
     ```
     act :: Command -> Model -> Event
     ```
@@ -86,7 +107,7 @@
 
 > Services are used to orchestrate interaction between one or more business models and the outside world
 
-* Services are functions operating across several contexts
+* Services are functions operating *across several contexts*
 * They can be synchronous or asynchronous (we use mostly synchronous)[^3]
 * There are no *distributed transactions*: Service has to cope with failures from each context
 
@@ -123,7 +144,7 @@ data StoredEvent s = StoredEvent { eventVersion :: EventVersion
 
 # Software
 
-## Code Review
+## 
 
 ![In Practice](images/workshop.jpg)
 
@@ -162,15 +183,16 @@ data StoredEvent s = StoredEvent { eventVersion :: EventVersion
   * Uses cryptographically signed events to ensure history cannot be tampered with
   * Turns journal into a "legally binding ledger"?
 
-# Questions
+# Questions?
 
 ## 
 
-![](images/omg_wtf.jpg)
+![](images/puzzled.jpg)
 
 # Credits
 
 * [HAL-9000](http://observationdeck.kinja.com/the-monoliths-have-faces-interstellar-answers-2001-a-1659091453)
+* [Puzzled](https://c1.staticflickr.com/1/62/164351244_5c26d331a0_b.jpg)
 
 [^1]: That's the way RDBMS handle transactional isolation: Record a *log* of all operations on data then reconcile when transactions are committed
 
@@ -181,3 +203,7 @@ wants to "pay" for synchronous confirmation
 
 [^4]: Blockchain is all rage in the FinTech ecosystem those days, although early implementation like Bitcoins or Dogecoins failed to
 deliver all their promises.
+
+[^5]: Assuming state is deterministic of course
+
+[^6]: May require invertible events
