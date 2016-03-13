@@ -15,7 +15,7 @@ newtype DemoStore a =
 instance MonadStore DemoStore where
   store a = S.modify (++ [(encode a)])
   load a = do
-    rs <- execStateT (runStore a) mempty
+    rs <- liftIO $ execStateT (runStore a) mempty
     return $ fromMaybe mempty $ traverse decode rs
 
 runInStore :: DemoStore a -> IO a

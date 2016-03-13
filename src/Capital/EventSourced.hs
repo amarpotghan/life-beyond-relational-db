@@ -128,7 +128,7 @@ runService effect = runReaderT (runExceptT . runServiceT $ effect)
 
 class (Monad m) => MonadStore m where
   store :: ToJSON a => a -> m ()
-  load :: FromJSON a => m x -> IO [a]
+  load :: FromJSON a => m x -> m [a]
 
 -------------------------------------------------------------- StoredEvent ---------------------------------------------------------------------------
 makeStoredEvent ::  ToJSON (Event a)
