@@ -95,13 +95,12 @@ actAndApply :: (CommandExecutor a s) => TVar s -> Command a -> STM (Either (Erro
 actAndApply v command = do
   s <- readTVar v
   let view = getView s
-  let e  = view `act` command
-  case e of
-   Right ev -> do
-     let newView = view `apply` ev
-     modifyTVar' v (setView newView)
-     return $ Right (ev, getEventType ev)
-   Left ev -> return $ Left ev
+      modifyState ev =  do
+          let newView = view `apply` ev
+          modifyTVar' v (setView newView)
+          return (ev, getEventType ev)
+
+  sequence $ modifyState <$> (view `act` command)
 
 gets :: (MonadIO m) => (s -> b) -> ServiceT e s m b
 gets f = f <$> (ask >>= liftIO . readTVarIO)
