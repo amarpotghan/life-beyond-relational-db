@@ -45,8 +45,12 @@ instance BusinessModel DemoView where
   (DemoView d) `act` AddDemo demo                 = let did = nextId d
                                                     in return $ DemoAdded demo { demoId = did }
 
-  (DemoView d) `act` UpdateDemo did newDemo    = validate (flip M.member d) did  (DemoUpdated did newDemo) (DemoNotFound did)
-  (DemoView d) `act` DeleteDemo did            = validate (flip M.member d) did (DemoDeleted did) (DemoNotFound did)
+  (DemoView d) `act` UpdateDemo did newDemo    = if M.member did d
+                                                 then Right (DemoUpdated did newDemo)
+                                                 else Left (DemoNotFound did)
+  (DemoView d) `act` DeleteDemo did            = if (M.member did d)
+                                                 then Right (DemoDeleted did)
+                                                 else Left (DemoNotFound did)
 
   (DemoView d) `apply` DemoAdded demo          = DemoView (M.insert (demoId demo) demo d)
   (DemoView d) `apply` DemoUpdated did demo    = DemoView (M.adjust (const demo) did d)
@@ -55,10 +59,6 @@ instance BusinessModel DemoView where
 
 instance ToJSON (Event DemoView)
 instance FromJSON (Event DemoView)
-
-validate :: (a -> Bool) -> a -> s -> e -> Either e s
-validate f a success failure | f a = return success
-                             | otherwise = Left failure
 
 -- | Get next numeric identifier for a Map.
 nextId :: (Num a, Eq b, Eq a, Enum a) => M.Map a b -> a
