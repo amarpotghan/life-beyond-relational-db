@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="Life Beyond Relational Database" />
+  <title></title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="/css/reveal.css"/>
+    <style type="text/css">code{white-space: pre;}</style>
+    <link rel="stylesheet" href="/css/theme/simple.css" id="theme">
+    <!-- If the query includes 'print-pdf', include the PDF print sheet -->
+    <script>
+      if( window.location.search.match( /print-pdf/gi ) ) {
+        var link = document.createElement( 'link' );
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = '/css/print/pdf.css';
+        document.getElementsByTagName( 'head' )[0].appendChild( link );
+      }
+    </script>
+    <!--[if lt IE 9]>
+    <script src="/lib/js/html5shiv.js"></script>
+    <![endif]-->
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section>
+    <h3 class="title">Capital Match Team</h3>
+    <h2 class="author">Life Beyond Relational Database</h2>
+    <h3 class="date">2016-03-10</h3>
+</section>
+
+\begin{frame}{Agenda}
+
+\begin{itemize}[<+->]
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Introduction
+\item
+  Event-Sourcing Model
+\item
+  Implementation \& Usage
+\item
+  Future works
+\end{itemize}
+
+\end{frame}
+
+\section{Introduction}\label{introduction}
+
+\begin{frame}{Who are we?}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{images/cm-website.png}
+\caption{}
+\end{figure}
+
+\end{frame}
+
+\begin{frame}{Who are we?}
+
+\begin{itemize}[<+->]
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Capital Match is the leading plaform in Singapore for peer-to-peer
+  lending to SMEs
+\item
+  Backend system developed in Haskell, frontend in Clojurescript/Om
+  since 2014
+\item
+  Core Development team of 3 + 1: Amar, Arnaud, Guo Liang, Zhou Yu
+\end{itemize}
+
+\end{frame}
+
+\section{Relational Model}\label{relational-model}
+
+\begin{frame}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{images/relational-model.gif}
+\caption{}
+\end{figure}
+
+\end{frame}
+
+\begin{frame}{What's good with Relational Model?}
+
+\begin{itemize}[<+->]
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Really great for querying \(\longrightarrow\) \emph{SQL Rocks!}
+\item
+  Conceptually simple to understand: \emph{Everything is a Table}
+\item
+  Ubiquitous
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{What's wrong with Relational Model?}
+
+\begin{itemize}[<+->]
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Writes/updates are complex
+\item
+  \emph{Impedance Mismatch}: Lot of data is more tree-ish or graph-ish
+\item
+  One single Database for everything \(\longrightarrow\) \emph{SPOF}
+\item
+  \textbf{Mutable State}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{images/one-ring.jpg}
+\caption{}
+\end{figure}
+
+\end{frame}
+
+\section{Event Sourcing}\label{event-sourcing}
+
+\begin{frame}{State vs.~Transitions}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{images/state-transitions.png}
+\caption{}
+\end{figure}
+
+\end{frame}
+
+\begin{frame}{State vs.~Transitions}
+
+\begin{itemize}[<+->]
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  RDBMS stores the \textbf{state} of the model at some point in
+  time\ldots{}
+\item
+  \ldots{} But we are also interested in the \textbf{transitions}
+  \ldots{}
+\item
+  \ldots{} And state\footnote<.->{Assuming state is deterministic of
+    course} can always be reconstructed from a \emph{sequence of
+  transitions}.
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{The Event Sourcing Model}
+
+\begin{quote}
+Event Sourcing ensures that all changes to application state are stored
+as a sequence of events. Not just can we query these events, we can also
+use the event log to reconstruct past states, and as a foundation to
+automatically adjust the state to cope with retroactive changes.
+\end{quote}
+
+\begin{quote}
+\href{http://martinfowler.com/eaaDev/EventSourcing.html}{Martin Fowler}
+\end{quote}
+
+\end{frame}
+
+\begin{frame}{Events makes it easier to\ldots{}}
+
+\begin{itemize}[<+->]
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Audit current state and what lead to it
+\item
+  Implement generic undo/redo mechanism\footnote<.->{May require
+    invertible events}
+\item
+  Run simulations with different hypothesis over live data
+\item
+  Cope with data format migrations
+\item
+  Handle potentially conflicting changes\footnote<.->{That's the way
+    RDBMS handle transactional isolation: Record a \emph{log} of all
+    operations on data then reconcile when transactions are committed}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{Events Drive Business}
+
+\begin{itemize}[<+->]
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Events are what makes a model dynamic: What affects it, how it reacts
+  to outside world\ldots{}
+\item
+  Provide foundation for
+  \href{http://www.amazon.fr/Domain-Driven-Design-Tackling-Complexity-Software/dp/0321125215}{Domain
+  Driven Design} techniques \(\longrightarrow\) Better business models,
+  Ubiquitous language
+\item
+  Lead to
+  \href{http://ziobrando.blogspot.sg/2013/11/introducing-event-storming.html}{Event
+  Storming} technique for ``requirements'' elicitation and business
+  domain modelling\footnote<.->{I never know how many \texttt{l}s
+    modelling takes\ldots{}}
+\end{itemize}
+
+\end{frame}
+
+\section{In Practice}\label{in-practice}
+
+\begin{frame}{Overview}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{images/event-sourcing.png}
+\caption{}
+\end{figure}
+
+\end{frame}
+
+\begin{frame}{Pure Business Models}
+
+\begin{itemize}[<+->]
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Each model delimits a \emph{Bounded Context}: It is responsible for a
+  single cohesive part of the domain
+\item
+  Models are \textbf{pure} immutable data structures
+\item
+  Distinguish \emph{Commands} from \emph{Events}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]{Pure Business Models (2)}
+
+\begin{itemize}[<+->]
+\item
+  Commands compute Event from State
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\OtherTok{act ::} \DataTypeTok{Command} \OtherTok{->} \DataTypeTok{Model} \OtherTok{->} \DataTypeTok{Event}
+\end{Highlighting}
+\end{Shaded}
+\item
+  Events modify model
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\OtherTok{apply ::} \DataTypeTok{Event} \OtherTok{->} \DataTypeTok{Model} \OtherTok{->} \DataTypeTok{Model}
+\end{Highlighting}
+\end{Shaded}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{Effectful Services}
+
+\begin{quote}
+Services are used to orchestrate interaction between one or more
+business models and the outside world
+\end{quote}
+
+\begin{itemize}[<+->]
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Services are functions operating \emph{across several contexts}
+\item
+  They can be synchronous or asynchronous (we use mostly
+  synchronous)\footnote<.->{Synchronicity is a property of the business
+    domain, e.g.~depends on what client expects from the service and
+    whether or not he wants to ``pay'' for synchronous confirmation}
+\item
+  There are no \emph{distributed transactions}: Service has to cope with
+  failures from each context
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]{Effectful Services (2)}
+
+\begin{itemize}[<+->]
+\item
+  We have a monad to express effects and sequencing on each context:
+  \texttt{WebStateM}
+
+\begin{verbatim}
+newtype WebStateM g l m a = WebStateM { runWebM :: TVar g -> l -> m a }
+\end{verbatim}
+\item
+  \texttt{g} is a ``global'' Model which can be accessed concurrently
+  \(\longrightarrow\) protected in STM
+\item
+  \texttt{l} is local data, contextual to a single service execution
+\item
+  \texttt{m} is underlying monad, usually \texttt{IO}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]{Events Storage}
+
+\begin{verbatim}
+data StoredEvent s = StoredEvent { eventVersion :: EventVersion
+                                 , eventType    :: EventType s 
+                                 , eventDate    :: Date        
+                                 , eventUser    :: UserId      
+                                 , eventRequest :: Encoded Hex 
+                                 , eventSHA1    :: Encoded Hex 
+                                 , event        :: ByteString  
+                                 }
+\end{verbatim}
+
+\end{frame}
+
+\begin{frame}{Events Storage (2)}
+
+\begin{itemize}[<+->]
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  We use a simple Append-only file store, writing serialized events
+  (mostly JSON) packed with metadata
+\item
+  Each event has a (monotonically increasing) version which is used for
+  proper deserialization
+\item
+  Events carry useful information for troubleshooting and auditing: User
+  who initiated the request, request id itself, SHA1 representing
+  version of appplication
+\item
+  Events Store serializes concurrent writes
+\end{itemize}
+
+\end{frame}
+
+\section{Software}\label{software}
+
+\begin{frame}{}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{images/workshop.jpg}
+\caption{In Practice}
+\end{figure}
+
+\end{frame}
+
+\begin{frame}{Demo}
+
+\begin{itemize}[<+->]
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Anatomy of a complete business model
+
+  \begin{itemize}[<+->]
+  \itemsep1pt\parskip0pt\parsep0pt
+  \item
+    Web layer w/ servant
+  \item
+    Service layer (w/ Free monads\ldots{})
+  \item
+    Business model
+  \item
+    Migration code
+  \item
+    Standalone service
+  \end{itemize}
+\item
+  Using Haskell scripts for operational queries and updates
+\end{itemize}
+
+\end{frame}
+
+\section{Future Works}\label{future-works}
+
+\begin{frame}{}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{images/monolith-2001.jpg}
+\caption{}
+\end{figure}
+
+\end{frame}
+
+\begin{frame}{Implement Better CQRS}
+
+\begin{itemize}[<+->]
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Separate \emph{Read Model} from \emph{Write Model}
+\item
+  \emph{Write Model}: Append-only linear data store per context, very
+  fast, minimize locking/write time
+\item
+  \emph{Read model}: Optimized for specific querying, may be relational
+  if needed in order to make it more user-friendly
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{Make models resilient}
+
+\begin{itemize}[<+->]
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Resilience of models \(\longrightarrow\) \emph{Replication}
+\item
+  Use \href{http://raft.github.io/}{Raft} to maintain strong consistency
+  of models: \href{https://github.com/cartazio/haver-raft}{several}
+  \href{https://github.com/NicolasT/kontiki}{implementations}
+  \href{https://github.com/chrisnc/tangaroa}{in} Haskell
+\item
+  Started implementation of practical cluster based on Raft, called
+  \href{https://github.com/capital-match/raptr}{raptr}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{Make models secure}
+
+\begin{itemize}[<+->]
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Turn event stream into a \emph{source of truth} \(\longrightarrow\)
+  Blockchain\footnote<.->{Blockchain is all rage in the FinTech
+    ecosystem those days, although early implementation like Bitcoins or
+    Dogecoins failed to deliver all their promises.} and beyond\ldots{}
+\item
+  Juno: \href{https://github.com/buckie/juno}{Smart contracts} over Raft
+  cluster
+\item
+  Uses cryptographically signed events to ensure history cannot be
+  tampered with
+\item
+  Turns journal into a ``legally binding ledger''?
+\end{itemize}
+
+\end{frame}
+
+\section{Questions?}\label{questions}
+
+\begin{frame}{}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{images/puzzled.jpg}
+\caption{}
+\end{figure}
+
+\end{frame}
+
+\section{Credits}\label{credits}
+
+\begin{itemize}[<+->]
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  \href{http://observationdeck.kinja.com/the-monoliths-have-faces-interstellar-answers-2001-a-1659091453}{HAL-9000}
+\item
+  \href{https://c1.staticflickr.com/1/62/164351244_5c26d331a0_b.jpg}{Puzzled}
+\end{itemize}
+    </div>
+  </div>
+
+
+  <script src="/lib/js/head.min.js"></script>
+  <script src="/js/reveal.js"></script>
+
+  <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        theme: 'beige', // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: '/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: '/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+          { src: '/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } },
+//          { src: '/plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; }, }
+//          { src: '/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+]});
+    </script>
+    </body>
+</html>

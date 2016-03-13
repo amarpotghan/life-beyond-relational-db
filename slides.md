@@ -1,5 +1,5 @@
-% Capital Match Team
 % Life Beyond Relational Database
+% Capital Match Team
 % 2016-03-10
 
 ## Agenda
