@@ -8,10 +8,12 @@ import           Demo.State
 
 import           Control.Concurrent.STM.TVar (TVar, readTVar)
 import           Control.Monad.Except        (throwError)
-import           Control.Monad.IO.Class      (liftIO)
+import           Control.Monad.Trans      (liftIO)
 import           Control.Monad.Reader        (ask)
 import           Control.Monad.STM           (STM, atomically)
 import qualified Data.Map                    as M
+
+type InSTM s a = TVar s -> STM a
 
 createDemo :: Demo -> DemoService (Event DemoView)
 createDemo = applyCommand . AddDemo
@@ -22,13 +24,11 @@ updateDemo did = applyCommand . UpdateDemo did
 deleteDemo :: DemoId -> DemoService (Event DemoView)
 deleteDemo = applyCommand . DeleteDemo
 
-getDemo :: DemoId -> DemoService (Demo)
+getDemo :: DemoId -> DemoService Demo
 getDemo did = maybe (throwError $ DemoNotFound did) return =<< get (demo did)
 
 getDemos :: DemoService [Demo]
 getDemos = get allDemos
-
-type InSTM s a = TVar s -> STM a
 
 get :: InSTM DemoState a -> DemoService a
 get instm = ask >>= (liftIO . atomically . instm)

@@ -35,23 +35,34 @@ import qualified Network.Wai.Handler.Warp   as Warp
 import           Servant
 
 
-type DemoAPI = "api" :> "demos"
-               :> (Get '[JSON] [Demo]
-                :<|> Capture "demoId" DemoId :> Get '[JSON] Demo
-                :<|> ReqBody '[JSON] Demo :> Post '[JSON] (Event DemoView)
-                :<|> Capture "demoId" DemoId :> ReqBody '[JSON] Demo :> Put '[JSON] (Event DemoView)
-                :<|> Capture "demoId" DemoId :> Delete '[JSON] (Event DemoView)
-                )
+type DemoAPI =
+  "api" :> "demos" :>
+  (      Get '[JSON] [Demo]
+    :<|> Capture "demoId" DemoId :> Get '[JSON] Demo
+    :<|> ReqBody '[JSON] Demo :> Post '[JSON] (Event DemoView)
+    :<|> Capture "demoId" DemoId :> ReqBody '[JSON] Demo :> Put '[JSON] (Event DemoView)
+    :<|> Capture "demoId" DemoId :> Delete '[JSON] (Event DemoView)
+  )
 
-demoHandlers :: (MonadStore store, MonadIO store) => ServerT DemoAPI (ServiceT (Error DemoView) DemoState store)
-demoHandlers = Service.getDemos :<|> getDemo :<|> createDemo :<|> updateDemo :<|> deleteDemo
+demoHandlers ::
+  (MonadStore store, MonadIO store)
+  => ServerT DemoAPI (ServiceT (Error DemoView) DemoState store)
+demoHandlers =
+  Service.getDemos :<|>
+  getDemo :<|>
+  createDemo :<|>
+  updateDemo :<|>
+  deleteDemo
 
 demoServer :: TVar DemoState -> Server DemoAPI
 demoServer s = enter toEither demoHandlers
-  where toEither :: ServiceT (Error DemoView) DemoState DemoStore  :~> EitherT ServantErr IO
-        toEither = Nat $ \ service -> (liftIO (runInStore $ runService service s) >>= \case
-                                       Left err -> left $ toServantErr err
-                                       Right a -> return a)
+  where
+    toEither :: ServiceT (Error DemoView) DemoState DemoStore  :~> EitherT ServantErr IO
+    toEither = Nat f
+      where f service =
+              liftIO (runInStore $ runService service s) >>= \case
+              Left err -> left $ toServantErr err
+              Right a -> return a
 
 toServantErr :: Error DemoView -> ServantErr
 toServantErr (DemoNotFound did) = err404 { errBody = B8.pack $ "could not found demo with id: " <> show did }
